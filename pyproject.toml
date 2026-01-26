@@ -21,6 +21,7 @@ dependencies = [
 
   # ML
   "scikit-learn>=1.3",
+  "xgboost",
 
   # ML pipelines
   "mlflow>=2.9",
