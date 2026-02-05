@@ -22,10 +22,20 @@ modify_logger.set_log_level(logging.INFO)
 
 def remove_customer_id(df : pd.DataFrame):
     df.drop(columns=[COL_TO_BE_DELETED] , inplace = True)
+    modify_logger.save_logs(
+            f"Dropped column: {COL_TO_BE_DELETED}",
+            "info"
+        )
     return df
 
 def drop_nulls(df):
+    before = df.shape[0]
     df.dropna(inplace = True)
+    after = df.shape[0]
+    modify_logger.save_logs(
+        f"Dropped {before - after} rows with null values",
+        "info"
+    )
     return df
 
 def remove_ts(cols : pd.DataFrame):
@@ -33,8 +43,19 @@ def remove_ts(cols : pd.DataFrame):
     return cols
 
 def convert(df : pd.DataFrame , num_cols : List) -> pd.DataFrame:
-    for col in num_cols :
-        df[col] = df[col].astype(int)
+    for col in num_cols:
+        try:
+            df[col] = df[col].astype(np.int64)
+        except Exception as e:
+            modify_logger.save_logs(
+                f"Failed to convert column {col} to int: {e}",
+                "error"
+            )
+            raise
+    modify_logger.save_logs(
+        f"Converted {len(num_cols)} numerical columns to int",
+        "info"
+    )
     
     return df
 
@@ -65,15 +86,22 @@ def fetch_data(data_path : Path) -> pd.DataFrame:
 def main(data_path:Path , file_name : str) -> pd.DataFrame:
     df = fetch_data(data_path)
     df_input_modified = input_modifications(df)
+    modify_logger.save_logs(
+    f"Completed feature modification for file: {file_name}. Final shape: {df_input_modified.shape}",
+    "info"
+    )
 
     return df_input_modified
 
 def save_df(df : pd.DataFrame , output_path : Path):
     df.to_csv(output_path)
+    modify_logger.save_logs(
+        f"Saved processed data to {output_path}",
+        "info"
+    )
 
 if __name__ == "__main__":
-    for ind in range(1,4):
-        input_file_path = sys.argv[ind]
+    for input_file_path in sys.argv[1:]:
         curr_path = Path(__file__)
         root_path = curr_path.parent.parent.parent
         output_path = root_path / 'data' / 'processed'
