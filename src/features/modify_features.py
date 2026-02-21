@@ -104,10 +104,13 @@ if __name__ == "__main__":
     for input_file_path in sys.argv[1:]:
         curr_path = Path(__file__)
         root_path = curr_path.parent.parent.parent
-        output_path = root_path / 'data' / 'processed'
+        output_path = root_path / 'data' / 'processed' / 'modified'
+        output_path.mkdir(parents=True,exist_ok=True)
         data_path = root_path / input_file_path
         file_name = data_path.parts[-1]
         df_final = main(data_path , file_name)
-        save_df(df_final , output_path / file_name)
 
-        
+        if file_name == "customer_churn_dataset-testing-master.csv":
+            file_name = "test.csv"
+        save_df(df_final , output_path / file_name)
+ 
