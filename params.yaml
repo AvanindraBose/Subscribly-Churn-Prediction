@@ -1,3 +1,6 @@
 make_dataset:
   test_size: 0.2
   random_state: 42
+
+build_features:
+  bins: [18, 25, 35, 45, 55, 70,120]
