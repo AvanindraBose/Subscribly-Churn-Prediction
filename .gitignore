@@ -208,3 +208,4 @@ __marimo__/
 mlartifacts/
 mlflow.db
 /dvc.yaml
+/models
