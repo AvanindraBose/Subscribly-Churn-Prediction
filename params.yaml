@@ -4,3 +4,11 @@ make_dataset:
 
 build_features:
   bins: [18, 25, 35, 45, 55, 70,120]
+
+model_params:
+  n_estimators: 200
+  max_depth: 4
+  learning_rate: 0.15323934894109686
+  colsample_bytree: 0.9577679404926505
+  subsample: 0.9902863317166671
+  n_jobs: -1
