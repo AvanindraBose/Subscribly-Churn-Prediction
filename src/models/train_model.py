@@ -59,47 +59,47 @@ def get_git_commit()-> str :
         train_model_logger.save_logs("Error retrieving git commit hash. Ensure this code is run within a git repository.", log_level='error', exc_info=True)
         return "Unknown"
 
-def get_exp_info(input_file)-> dict:
-    try :
-        with open(input_file) as f :
-            exp_info = safe_load(f)
-    except FileNotFoundError:
-        train_model_logger.save_logs(f"Experiment info file {input_file} not found. Using default experiment info.", log_level='error')
-        default_exp_info = {
-            'experiment_name': 'Default Experiment',
-            'model_name' : 'XGBoost'
-        }
-        return default_exp_info
-    except Exception as e :
-        train_model_logger.save_logs(f"Unexpected error reading experiment info from {input_file}: {e}", log_level='error', exc_info=True)
-        raise
-    else :
-        train_model_logger.save_logs(f"Experiment info loaded successfully from {input_file}", log_level='info')
-        return exp_info["experiment_info"]
+# def get_exp_info(input_file)-> dict:
+#     try :
+#         with open(input_file) as f :
+#             exp_info = safe_load(f)
+#     except FileNotFoundError:
+#         train_model_logger.save_logs(f"Experiment info file {input_file} not found. Using default experiment info.", log_level='error')
+#         default_exp_info = {
+#             'experiment_name': 'Default Experiment',
+#             'model_name' : 'XGBoost'
+#         }
+#         return default_exp_info
+#     except Exception as e :
+#         train_model_logger.save_logs(f"Unexpected error reading experiment info from {input_file}: {e}", log_level='error', exc_info=True)
+#         raise
+#     else :
+#         train_model_logger.save_logs(f"Experiment info loaded successfully from {input_file}", log_level='info')
+#         return exp_info["experiment_info"]
 
-def get_params(input_file)-> dict :
-    try :
-        with open(input_file) as f :
-            params = safe_load(f)
-    except FileNotFoundError:
-        train_model_logger.save_logs(f"Parameter file {input_file} not found. Using the default hyperparameters.", log_level='error')
-        default_params = {
-            'n_estimators':200,
-            'max_depth':4,
-            'larning_rate':0.1,
-            'subsample':0.8,
-            'colsample_bytree':0.8,
-            'n_jobs':-1
-        }
+# def get_params(input_file)-> dict :
+#     try :
+#         with open(input_file) as f :
+#             params = safe_load(f)
+#     except FileNotFoundError:
+#         train_model_logger.save_logs(f"Parameter file {input_file} not found. Using the default hyperparameters.", log_level='error')
+#         default_params = {
+#             'n_estimators':200,
+#             'max_depth':4,
+#             'learning_rate':0.1,
+#             'subsample':0.8,
+#             'colsample_bytree':0.8,
+#             'n_jobs':-1
+#         }
 
-        return default_params
+#         return default_params
     
-    except Exception as e :
-        train_model_logger.save_logs(f"Unexpected error reading parameters from {input_file}: {e}", log_level='error', exc_info=True)
-        raise
-    else :
-        train_model_logger.save_logs(f"Parameters loaded successfully from {input_file}", log_level='info')
-        return params['model_params']
+#     except Exception as e :
+#         train_model_logger.save_logs(f"Unexpected error reading parameters from {input_file}: {e}", log_level='error', exc_info=True)
+#         raise
+#     else :
+#         train_model_logger.save_logs(f"Parameters loaded successfully from {input_file}", log_level='info')
+#         return params['model_params']
 
 def load_preprocessor(preprocessor_path : Path)-> Pipeline:
     try :
@@ -130,11 +130,32 @@ def validate_schema(train_df:pd.DataFrame , val_df:pd.DataFrame):
         log_level='info'
     )
 
-def get_model_instance(input_file)-> XGBClassifier:
-    params = get_params(input_file)
+def get_model_instance(params : dict)-> XGBClassifier:
     model = XGBClassifier(**params)
     train_model_logger.save_logs(f"XGBoost model instance created with parameters: {params}", log_level='info')
     return model
+
+def load_config(config_path: Path) -> dict:
+    """
+    Load configuration from YAML file.
+    Returns the entire config dictionary.
+    """
+    try:
+        with open(config_path) as f:
+            config = safe_load(f)
+        
+        train_model_logger.save_logs(
+            f"Config loaded from {config_path.name}",
+            log_level='info'
+        )
+        return config
+    
+    except FileNotFoundError:
+        train_model_logger.save_logs(
+            f"Config file not found: {config_path}",
+            log_level='error'
+        )
+        raise
 
 def evaluate_model(model: XGBClassifier , X_val : pd.DataFrame , y_val : pd.Series)-> float:
     try :
@@ -150,7 +171,7 @@ def main():
         if len(sys.argv) != 3:
             raise ValueError("Usage: python train_model.py <train_path> <val_path>")
         
-        root_path = Path(__file__).parent.parent
+        root_path = Path(__file__).parent.parent.parent
         train_file_path = Path(sys.argv[1])
         val_file_path = Path(sys.argv[2])
         preprocessor_path = root_path / "models"/ "transformers" / "preprocessor.joblib"
@@ -160,20 +181,35 @@ def main():
         if TARGET not in train_df.columns or TARGET not in val_df.columns:
             train_model_logger.save_logs(f"Target column '{TARGET}' missing in dataset. Please ensure both training and validation datasets contain the target column.", log_level='error')
             raise ValueError(f"Target column '{TARGET}' missing in dataset.")
-
+        # Validate Scehama
         validate_schema(train_df, val_df)
+        # Divide intor train and validation features and target
         X_train = train_df.drop(columns=[TARGET])
         y_train = train_df[TARGET]
 
         X_val = val_df.drop(columns=[TARGET])
         y_val = val_df[TARGET]
 
-        experiment_name , model_name = get_exp_info("params.yaml")
+        #  load COnfig
+        config = load_config(root_path / "params.yaml")
+        
+        info = config.get("experiment_info", {})
+        model_params = config.get("model_params", {})
+
+        experiment_name = info.get("experiment_name")
+
+        model_name = info.get("model_name")
+
+        print(f"Experiment Name: {experiment_name}, Model Name: {model_name}")
+
         mlflow.set_tracking_uri("http://127.0.0.1:5000")
-        mlflow.set_experiment(experiment_name)
+
+        mlflow.set_experiment(f"{experiment_name} v1")
+
         git_commit_hash = get_git_commit()
+
         with mlflow.start_run(run_name=f"Train_{model_name}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{git_commit_hash}") as run:
-            model = get_model_instance("params.yaml")
+            model = get_model_instance(model_params)
             model.fit(X_train,y_train)
             train_model_logger.save_logs("Model training completed successfully", log_level='info')
             #  Evaluate
@@ -204,7 +240,7 @@ def main():
 
             mlflow.sklearn.log_model(
             sk_model=final_pipeline,
-            artifact_path="model",
+            artifact_path=f"best_model_{model_name}",
             registered_model_name=model_name
             )
 

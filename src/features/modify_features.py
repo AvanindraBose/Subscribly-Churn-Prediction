@@ -94,7 +94,7 @@ def main(data_path:Path , file_name : str) -> pd.DataFrame:
     return df_input_modified
 
 def save_df(df : pd.DataFrame , output_path : Path):
-    df.to_csv(output_path)
+    df.to_csv(output_path,index = False)
     modify_logger.save_logs(
         f"Saved processed data to {output_path}",
         "info"

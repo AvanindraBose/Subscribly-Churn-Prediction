@@ -36,9 +36,12 @@ def create_age_buckets(df : pd.DataFrame , param_file:str)-> pd.DataFrame:
         raise ValueError("Age Column Not Found in the DataFrame")
     bins = read_params(param_file)
 
+    labels = [f"{bins[i]}_{bins[i+1]-1}" for i in range(len(bins)-1)]
+
     df['age_bucket'] = pd.cut(
         df['Age'],
         bins=bins,
+        labels=labels,
         right = False
     )
     build_logger.save_logs(
