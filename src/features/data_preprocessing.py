@@ -7,6 +7,7 @@ from pathlib import Path
 from logger import create_log_path , CustomLogger
 from sklearn.preprocessing import StandardScaler , OneHotEncoder , OrdinalEncoder
 from sklearn.compose import ColumnTransformer
+from datetime import datetime,timezone
 # Steps Followed:
 # Numerical Columns : Perform Standard Scaling
 # Categorical Columns Except Subscription Type : Perform OHE
@@ -20,6 +21,8 @@ data_preprocessing_logger = CustomLogger(
 )
 
 data_preprocessing_logger.set_log_level(logging.INFO)
+
+data_preprocessing_logger.save_logs(f"Data Preprocessing Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 
 def fetch_data(data_path:Path)-> pd.DataFrame:
     if not isinstance(data_path, Path):

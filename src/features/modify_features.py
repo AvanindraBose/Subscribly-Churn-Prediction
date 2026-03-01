@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 from pathlib import Path
 from logger import create_log_path , CustomLogger
+from datetime import datetime , timezone
 # Steps Followed Here : 
 # 1. Remove Customer ID from all the extracts
 # 2. Drop Null Values (Only 1 null row missing so far)
@@ -19,6 +20,8 @@ modify_logger = CustomLogger(
 )
 
 modify_logger.set_log_level(logging.INFO)
+
+modify_logger.save_logs(f"Modify Features Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 
 def remove_customer_id(df : pd.DataFrame):
     df.drop(columns=[COL_TO_BE_DELETED] , inplace = True)

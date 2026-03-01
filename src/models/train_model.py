@@ -14,7 +14,7 @@ from yaml import safe_load
 from sklearn.metrics import roc_auc_score
 
 TARGET = 'Churn'
-log_file_path = create_log_path("train_model")
+log_file_path = create_log_path("Train_Model")
 
 train_model_logger = CustomLogger(
     logger_name="Model Training",
@@ -22,6 +22,8 @@ train_model_logger = CustomLogger(
 )
 
 train_model_logger.set_log_level(logging.INFO)
+
+train_model_logger.save_logs(f"Model Training Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 
 def load_dataset(file_path:Path)-> pd.DataFrame:
     try :

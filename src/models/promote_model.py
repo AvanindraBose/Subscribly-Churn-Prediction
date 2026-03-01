@@ -11,7 +11,7 @@ from typing import Optional
 
 TARGET_METRIC = 'roc_auc'
 
-log_file_path = create_log_path("promote_model")
+log_file_path = create_log_path("Promote_Model")
 promote_model_logger = CustomLogger(
     logger_name="Model Promotion",
     log_filename=log_file_path

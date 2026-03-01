@@ -5,6 +5,7 @@ from yaml import safe_load
 from logger import CustomLogger,create_log_path
 from sklearn.model_selection import train_test_split
 from pathlib import Path
+from datetime import datetime , timezone
 
 log_file_path = create_log_path("Make Dataset")
 dataset_logger = CustomLogger(
@@ -14,6 +15,7 @@ dataset_logger = CustomLogger(
 
 dataset_logger.set_log_level(level=logging.INFO)
 
+dataset_logger.save_logs(f"Make Dataset Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 
 def load_raw_data(input_path:Path) -> pd.DataFrame:
     raw_data = pd.read_csv(input_path)

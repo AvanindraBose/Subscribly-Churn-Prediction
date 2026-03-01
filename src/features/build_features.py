@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from logger import create_log_path, CustomLogger
 from yaml import safe_load
-
+from datetime import datetime,timezone
 # Steps Followed Here : 
 # 1. Create Bucketed Age Column
 # 2. Remove Age Column
@@ -15,6 +15,9 @@ build_logger = CustomLogger(
     log_filename=log_file_path
 )
 build_logger.set_log_level(logging.INFO)
+
+build_logger.save_logs(f"Build Features Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
+
 def read_params(input_file:str)-> list:
     try:
         with open(input_file) as f:
