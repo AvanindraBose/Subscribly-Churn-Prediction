@@ -3,7 +3,7 @@ import logging
 import mlflow
 from pathlib import Path
 from yaml import safe_load
-from datetime import datetime
+from datetime import datetime,timezone
 from mlflow.tracking import MlflowClient
 from logger import create_log_path,CustomLogger
 from mlflow.entities.model_registry import ModelVersion
@@ -18,7 +18,7 @@ promote_model_logger = CustomLogger(
 )
 
 promote_model_logger.set_log_level(logging.INFO)
-
+promote_model_logger.save_logs(f"Model Promotion Pipeline Started at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}", log_level='info')
 def load_config(config_path:Path)-> dict:
     try:
         with open(config_path) as f:
@@ -33,7 +33,7 @@ def load_config(config_path:Path)-> dict:
         promote_model_logger.save_logs(f"Configuration loaded successfully from {config_path}", log_level='info')
         return config
 
-def get_production_version(client : MlflowClient , model_name : str):
+def get_production_version(client : MlflowClient , model_name : str) -> Optional[ModelVersion]:
     try:
         versions = client.search_model_versions(f"name='{model_name}'")
         for v in versions:
@@ -45,7 +45,7 @@ def get_production_version(client : MlflowClient , model_name : str):
         promote_model_logger.save_logs(f"Error retrieving production version for model {model_name}: {e}", log_level='error')
         raise
 
-def get_metric_from_run(client : MlflowClient , run_id:str , metric_name:str):
+def get_metric_from_run(client : MlflowClient , run_id:str , metric_name:str) -> float:
     try :
         run = client.get_run(run_id)
         metrics = run.data.metrics
@@ -57,7 +57,7 @@ def get_metric_from_run(client : MlflowClient , run_id:str , metric_name:str):
         promote_model_logger.save_logs(f"Error retrieving metric {metric_name} from run {run_id}: {e}", log_level='error')
         raise
 
-def get_latest_version(client : MlflowClient ,model_name:str):
+def get_latest_version(client : MlflowClient ,model_name:str) -> ModelVersion:
     try :
         versions = client.get_latest_versions(model_name)
         if not versions:
@@ -100,7 +100,7 @@ def main():
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
     client = MlflowClient()
 
-    candidate = None
+    
     if len(sys.argv) > 1:
         version_number = sys.argv[1]
         candidate = client.get_model_version(model_name, version_number)
