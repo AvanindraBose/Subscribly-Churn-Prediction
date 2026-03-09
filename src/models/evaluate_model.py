@@ -109,7 +109,6 @@ def main():
     
     y_prob = model.predict_proba(X_test)
     y_prob = y_prob[:,1]
-    print(y_prob.value_counts())
     test_roc_auc = roc_auc_score(y_test, y_prob)
     evaluate_model_logger.save_logs(f"Test ROC-AUC: {test_roc_auc:.6f}",log_level='info')
 
