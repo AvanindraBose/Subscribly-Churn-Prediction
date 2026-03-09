@@ -98,37 +98,31 @@ def main():
 
     #  Fetch model name and experiment name
     model_name = config.get("experiment_info",{}).get("model_name")
-    exp_name= config.get("experiment_info",{}).get("experiment_name")
+    exp_name = config.get("experiment_info",{}).get("experiment_name")
 
     # Load Production ML Model for Testing
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
-    # client = MlflowClient()
+    client = MlflowClient()
 
     model = load_model(model_name)
     # Getting Predictions
-    # print(model.named_steps['preprocessor'].feature_names_in_)
-    y_prob = model.predict_proba(X_test)[:,1]
-    y_pred = (y_prob > 0.5).astype(int)
-    print(confusion_matrix(y_test, y_pred))
-
-    # print("Printing Columsn" , X_test.columns)
-    # y_prob = model.predict_proba(X_test)
-    # y_prob = y_prob[:,1]
-    # print(y_prob.value_counts())
-    # test_roc_auc = roc_auc_score(y_test, y_prob)
-    # print(test_roc_auc)
-    # evaluate_model_logger.save_logs(f"Test ROC-AUC: {test_roc_auc:.6f}",log_level='info')
-
-    # mlflow.set_experiment(f"{exp_name} v1")
-    # with mlflow.start_run(
-    #     run_name= f"test_evaluation_{model_name}_{datetime.now(timezone.utc).strftime(('%Y%m%d_%H%M%S'))}"
-    # ):
-    #     # Logging params to mlflow
-    #     mlflow.log_metric("test_roc_auc", test_roc_auc)
-    #     mlflow.log_param("evaluated_stage", "Production")
     
-    # evaluate_model_logger.save_logs(f"Successfully Ran the Evaluate Model Pipeline at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')} and logged the metrics and params to mlflow",
-    #                                 log_level='info')
+    y_prob = model.predict_proba(X_test)
+    y_prob = y_prob[:,1]
+    print(y_prob.value_counts())
+    test_roc_auc = roc_auc_score(y_test, y_prob)
+    evaluate_model_logger.save_logs(f"Test ROC-AUC: {test_roc_auc:.6f}",log_level='info')
+
+    mlflow.set_experiment(f"{exp_name} v1")
+    with mlflow.start_run(
+        run_name= f"test_evaluation_{model_name}_{datetime.now(timezone.utc).strftime(('%Y%m%d_%H%M%S'))}"
+    ):
+        # Logging params to mlflow
+        mlflow.log_metric("test_roc_auc", test_roc_auc)
+        mlflow.log_param("evaluated_stage", "Production")
+    
+    evaluate_model_logger.save_logs(f"Successfully Ran the Evaluate Model Pipeline at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')} and logged the metrics and params to mlflow",
+                                    log_level='info')
 
 if __name__ == "__main__":
     main()
