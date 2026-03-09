@@ -9,7 +9,8 @@ from mlflow.tracking import MlflowClient
 from pathlib import Path
 from yaml import safe_load
 from mlflow.pyfunc import PyFuncModel
-
+import mlflow.sklearn
+from sklearn.metrics import confusion_matrix
 # Steps to be followed : 
 # 1. Remember since you have logged the entire pipeline of data preprocessing and the model so you have to pass
 # the test dataset that is saved in data/processed/built/test.csv
@@ -55,10 +56,10 @@ def load_config(config_path : Path)-> dict:
         evaluate_model_logger.save_logs(f"Successfully Loaded the file from {config_path}",log_level='info')
         return config
 
-def load_model(model_name : str)->PyFuncModel:
+def load_model(model_name : str):
     try : 
         model_uri = f"models:/{model_name}/Production"
-        model = mlflow.pyfunc.load_model(model_uri)
+        model = mlflow.sklearn.load_model(model_uri)
     except Exception as e :
         evaluate_model_logger.save_logs(f"Error Fetching the Models in {model_uri} : {e}",log_level='error')
         raise
@@ -101,18 +102,21 @@ def main():
 
     # Load Production ML Model for Testing
     mlflow.set_tracking_uri("http://127.0.0.1:5000")
-    client = MlflowClient()
+    # client = MlflowClient()
 
     model = load_model(model_name)
-
     # Getting Predictions
-    y_prob = model.predict(X_test)
-    
-    if y_prob.ndim == 2 :
-        y_prob = y_prob[:,1]
-    print(y_prob.value_counts())
-    test_roc_auc = roc_auc_score(y_test, y_prob)
-    print(test_roc_auc)
+    # print(model.named_steps['preprocessor'].feature_names_in_)
+    y_prob = model.predict_proba(X_test)[:,1]
+    y_pred = (y_prob > 0.5).astype(int)
+    print(confusion_matrix(y_test, y_pred))
+
+    # print("Printing Columsn" , X_test.columns)
+    # y_prob = model.predict_proba(X_test)
+    # y_prob = y_prob[:,1]
+    # print(y_prob.value_counts())
+    # test_roc_auc = roc_auc_score(y_test, y_prob)
+    # print(test_roc_auc)
     # evaluate_model_logger.save_logs(f"Test ROC-AUC: {test_roc_auc:.6f}",log_level='info')
 
     # mlflow.set_experiment(f"{exp_name} v1")
